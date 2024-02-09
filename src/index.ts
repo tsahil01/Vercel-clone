@@ -5,6 +5,10 @@ import path from "path"
 import { generateRandomId } from './utils';
 import { getAllFiles } from './pathsAndFiles';
 import { uploadFile } from './AzureBlob';
+import { createClient } from 'redis';
+
+const publisher = createClient();
+publisher.connect();
 
 const app = express();
 const PORT = 4000
@@ -20,10 +24,11 @@ app.post('/deploy', async (req, res)=>{
 
     const files = getAllFiles(path.join(__dirname,`/output/${randId}`))
 
-    await files.forEach(async file => {
+    files.forEach(async file => {
         await uploadFile(file.slice(__dirname.length + 1), file);
     })
-    console.log("Done")
+
+    publisher.lPush('build-queue', randId);
 
     res.json({
         msg: "Cloned",
