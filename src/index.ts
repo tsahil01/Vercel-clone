@@ -4,6 +4,7 @@ import simpleGit from 'simple-git'
 import path from "path"
 import { generateRandomId } from './utils';
 import { getAllFiles } from './pathsAndFiles';
+import { uploadFile } from './AzureBlob';
 
 const app = express();
 const PORT = 4000
@@ -18,6 +19,11 @@ app.post('/deploy', async (req, res)=>{
     await simpleGit().clone(repoURL, path.join(__dirname,`/output/${randId}`))
 
     const files = getAllFiles(path.join(__dirname,`/output/${randId}`))
+
+    await files.forEach(async file => {
+        await uploadFile(file.slice(__dirname.length + 1), file);
+    })
+    console.log("Done")
 
     res.json({
         msg: "Cloned",
